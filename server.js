@@ -1,15 +1,22 @@
 const express = require('express')
 const puppeteer = require('puppeteer')
+const fs = require("fs");
 const app = express()
-app.get('/puppe', (req, res) => {
+let baseUrl = __dirname + '/imgs';
+app.get('/puppe', (req, res, next) => {
     let query = req.query;
     console.log(query)
 
     //单次发送  Promise.all()?? https://juejin.cn/post/7003713678419705870
+    // res.type('jpeg')
     loadPage(query)
-        .then(data => {
-            res.type('jpeg')
-            res.send(data[0])
+        .then((data) => {
+            for (const dataKey in data) {
+                let img = data[dataKey]
+
+                fs.writeFileSync(baseUrl + `/${dataKey}.jpeg`, img);
+            }
+            res.status(200).send("save image success")
         })
         .catch(
             ereer => {
@@ -18,6 +25,7 @@ app.get('/puppe', (req, res) => {
             }
         )
 })
+
 /**
  *
  * @param page
@@ -71,7 +79,7 @@ const screenShotDOMElements = async function (page, selectors) {
             images.push(imageData)
         }
     }
-    console.log(images)
+    // console.log(images)
     return images;
 }
 
@@ -90,7 +98,7 @@ const loadPage = async function (query) {
     // .catch(err => {
     //     console.log('this error happen',err)
     // });
-    let selectors = ['#hero_skill', '#hero_skill_sp.cqframe', '#mw-content-text > div > div.raw.ibook > div.col-md-7 > div:nth-child(4)']
+    let selectors = ['#hero_skill > div.cqframe_box > div.b-skill > div.b-skill-img', '#hero_skill > div.cqframe_box > div.wp-box', '#hero_skill_sp > div.cqframe_box']
     let promise = screenShotDOMElements(page, selectors);
     return promise
 }
